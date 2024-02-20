@@ -2,9 +2,9 @@
     "agent": "obstacle",
     "shape": "circle",
     "color": "red",
-    "length": "1",
+    "length": "50",
     "position": {
-        "x": "0",
-        "y": "0"
+        "x": "200",
+        "y": "200"
     }
 }
