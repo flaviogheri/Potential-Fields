@@ -5,7 +5,6 @@ def to_np_float_array(x):
     return np.array(x, dtype=float)
 
 def parse_color(color_str):
-    print(color_str)
     if color_str == "red":
         return (255, 0, 0)
     elif color_str == "green":
@@ -43,9 +42,9 @@ class Agent(agent_template):
         self.goal = goal
 
         # Potential field constants
-        self.C = 1.0
-        self.Q = 1000
-        self.eta = 200
+        self.C = 0.1
+        self.Q = 500
+        self.eta = 30000
 
         self.obstacles_p = []
         self.v = self.desired_velocity  # to be updated before movement started so should be fine
@@ -77,7 +76,6 @@ class Agent(agent_template):
         if not self.obstacles_p:
             desired_velocity = self.Attractive_force()
         else: 
-            print("total force")
             desired_velocity = self.TPF()
     
         # Check if the magnitude of the desired velocity exceeds vmax
@@ -119,9 +117,8 @@ class Agent(agent_template):
         F_att = self.Attractive_force()
         F_total = F_att
         for obstacle_p in self.obstacles_p: 
-            print(obstacle_p)
-            print("att", F_att, "rep", self.Repulsive_force(obstacle_p))
             F_total += self.Repulsive_force(obstacle_p)
+            print("att", F_att, "rep", self.Repulsive_force(obstacle_p), "F_total", F_total)
         return F_total
 
 
