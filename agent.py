@@ -35,16 +35,17 @@ class agent_template:
 
 class Agent(agent_template): 
     """ represents micro entity/agent in swarm"""
-    def __init__(self, position, color, radius=10, goal=np.array([700,500]), max_speed=0.05, obstacles_p=None):
+    def __init__(self, position, color, radius=10, goal=np.array([700,500]), max_speed=0.05, dt=0.1, obstacles_p=None):
         super().__init__(position, radius)
 
         self.vmax = max_speed
+        self.dt = 1
         self.goal = goal
 
         # Potential field constants
-        self.C = 0.1
-        self.Q = 800
-        self.eta = 30000
+        self.C = 0.15 # scaling factor for attractive force
+        self.Q = 800 # scaling factor for repulsive force
+        self.eta = 30000 # steepness of potential field (gain for attractive force)
 
         if obstacles_p is None:
             self.obstacles_p = []
@@ -91,6 +92,8 @@ class Agent(agent_template):
         return desired_direction
     
     def move(self):
+        # Scale desired velocity by dt for frame-rate independent movement
+        scaled_velocity = self.desired_velocity * self.dt
         self.p += self.desired_velocity
 
     def attractive_force(self):

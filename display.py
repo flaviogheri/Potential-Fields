@@ -51,10 +51,14 @@ def main():
 
 
     # Create agent object
-    agent = Agent(position=position, color=agent_data['color'], radius=agent_data['length'], max_speed=0.5)
+    agent = Agent(position=position, color=agent_data['color'], radius=agent_data['length'], max_speed=0.8)
 
     agent.obstacles_p = (int(obs['position']['x']), int(obs['position']['y']))
 
+
+    # Set clock for framerate
+    clock = pg.time.Clock()
+    fps = 60  # Adjust this value to change the framerate (lower value slows down the simulation)
 
     # Main loop
     running = True
@@ -63,6 +67,9 @@ def main():
             if event.type == pg.QUIT:
                 running = False
 
+        # Limit framerate
+        dt = clock.tick(fps) / 1  # Convert milliseconds to seconds for calculations
+        agent.dt = dt
         agent.move()
 
 
