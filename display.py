@@ -1,6 +1,7 @@
 import pygame as pg
 import json
 from agent import Agent
+import numpy as np
 
 with open('obs.json') as f:
     obs = json.load(f)
@@ -80,10 +81,6 @@ def main():
 
         # Update the display
         pg.display.flip()
-
-
-
-
     pg.quit()
 if __name__ =="__main__":
     main()

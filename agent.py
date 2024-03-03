@@ -35,7 +35,7 @@ class agent_template:
 
 class Agent(agent_template): 
     """ represents micro entity/agent in swarm"""
-    def __init__(self, position, color, radius=10, goal=np.array([700,500]), max_speed=0.05):
+    def __init__(self, position, color, radius=10, goal=np.array([700,500]), max_speed=0.05, obstacles_p=None):
         super().__init__(position, radius)
 
         self.vmax = max_speed
@@ -43,10 +43,13 @@ class Agent(agent_template):
 
         # Potential field constants
         self.C = 0.1
-        self.Q = 500
+        self.Q = 800
         self.eta = 30000
 
-        self.obstacles_p = []
+        if obstacles_p is None:
+            self.obstacles_p = []
+        else:
+            self.obstacles_p = obstacles_p
         self.v = self.desired_velocity  # to be updated before movement started so should be fine
 
         self.color = parse_color(color)
@@ -71,86 +74,54 @@ class Agent(agent_template):
 #         self.obstacles_p = []
 
 
-    @property 
+    @property
     def desired_velocity(self):
         if not self.obstacles_p:
-            desired_velocity = self.Attractive_force()
-        else: 
-            desired_velocity = self.TPF()
-    
+            _, desired_direction = self.attractive_force()
+        else:
+            _, desired_direction = self.TPF()
+
         # Check if the magnitude of the desired velocity exceeds vmax
-        desired_velocity_magnitude = np.linalg.norm(desired_velocity)
-        
+        desired_velocity_magnitude = np.linalg.norm(desired_direction)
+
         if desired_velocity_magnitude > self.vmax:
             # Scale the velocity vector to ensure it falls within the vmax bounds
-            desired_velocity = desired_velocity / desired_velocity_magnitude * self.vmax
+            desired_direction = desired_direction / desired_velocity_magnitude * self.vmax
 
-        return desired_velocity
+        return desired_direction
     
     def move(self):
         self.p += self.desired_velocity
 
-    
-    
-
-    def Attractive_force(self):
+    def attractive_force(self):
         direction = (self.goal - self.p) / np.linalg.norm(self.goal - self.p)
         magnitude = self.C * np.sqrt(np.linalg.norm(self.p - self.goal))
-        force_vector = magnitude * direction
-        return force_vector
-        # delta_Uatt = self.C * np.sqrt(np.linalg.norm( self.p[0]- self.goal[0]) + np.linalg.norm(self.p[1] - self.goal[1]))
-
-        # return delta_Uatt
+        return magnitude, direction  # Return both magnitude and direction
     
-    def Repulsive_force(self, obstacle_p):
+    def repulsive_force(self, obstacle_p):
         direction = (self.p - obstacle_p) / np.linalg.norm(self.p - obstacle_p)
         distance = np.linalg.norm(obstacle_p - self.p)
-        if distance>self.Q:
-            delta_Urep = 0
-        else:        
-            delta_Urep = self.eta * (1/self.Q - 1/distance)* (1/(distance **2))
-        force_vector = delta_Urep * direction
-        return force_vector
+        if distance > self.Q:
+            magnitude = 0
+        else:
+            magnitude = self.eta * (1/self.Q - 1/distance) * (1/(distance **2))
+        return magnitude, direction  # Return both magnitude and direction
+
     
     def TPF(self):
         """returns the total potential field in that instance"""
-        F_att = self.Attractive_force()
-        F_total = F_att
-        for obstacle_p in self.obstacles_p: 
-            F_total += self.Repulsive_force(obstacle_p)
-            print("att", F_att, "rep", self.Repulsive_force(obstacle_p), "F_total", F_total)
-        return F_total
+        total_magnitude = 0
+        total_direction = np.zeros_like(self.goal - self.p)
 
+        # Combine attractive force
+        mag, dir = self.attractive_force()
+        total_magnitude += mag
+        total_direction += mag * dir
 
+        # Combine repulsive forces from obstacles
+        for obstacle_p in self.obstacles_p:
+            mag, dir = self.repulsive_force(obstacle_p)
+            total_magnitude -= mag
+            total_direction -= mag * dir
 
-
-
-    # def Attraction_force():
-    #     """ currently using basic formulation, in future think of changing for more complex. (So that attractive force gorues more slowly)
-        
-    #     potential idea--> use quadratic potential near goal (<d*) and conic further away"""
-
-    #     Uatt = C * np.sqrt(np.linalg.norm(self.p[0]-self.goal[0]) + np.linalg.norm(self.p[1] - self.goal[1]))
-    #     return Uatt
-    
-    # def Repuslive_force(obstacle_p):
-    #     """ distances of obstacles are measured in theta (radians) and euclidian distance"""
-
-    #     distance = np.linalg.norm(obstacle_p - self.p)
-    #     if distance > Q:
-    #         Urep = 0
-    #     else: 
-    #         Urep= 1 / (distance)
-    #     return Urep
-
-
-
-    # @property
-    # def desired_velocity(self):
-    #     distance = self.goal - self.p
-    #     norm = np.linalg.norm(distance)
-    #     if norm < self.r :
-    #         return np.zeros(2)
-    #     direction = distance / norm
-    #     return self.vmax * direction
-
+        return total_magnitude, total_direction
