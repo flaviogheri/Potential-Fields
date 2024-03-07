@@ -65,19 +65,18 @@ class swarm_agent(agent_template):
     @property
     def desired_velocity(self):
         if not self.obstacles_p:
-            _, desired_direction = self.attractive_force()
+            v = self.swarm_field.velocity() 
         else:
-            _, desired_direction = self.TPF()
+            v = self.swarm_field.velocity() + self.sum_d_avoid()
 
         # Check if the magnitude of the desired velocity exceeds vmax
-        desired_velocity_magnitude = np.linalg.norm(desired_direction)
+        desired_velocity_magnitude = np.linalg.norm(v)
 
         if desired_velocity_magnitude > self.vmax:
             # Scale the velocity vector to ensure it falls within the vmax bounds
-            desired_direction = desired_direction / desired_velocity_magnitude * self.vmax
+            v = v / desired_velocity_magnitude * self.vmax
 
-        return desired_direction
-    
+        return v
 
     # @property
     # in future might be worth transforming this into a property instead !!
@@ -86,15 +85,40 @@ class swarm_agent(agent_template):
         self.r_avoid = [math.sqrt((self.p[0] - obstacle_p[0])**2 + (self.p[1]-obstacle_p[1])**2) for obstacle_p in self.obstacles_p]
         return self.r_avoid
     
-    def S_avoid(self, alpha_avoid, Rta_ratio):
-        return (1 - 1/(1+ math.e**(alpha_avoid*(math.sqrt(self.r_avoid - Rta_ratio)))))
+    def S_avoid(self):
+        return [1 - 1/(1 + math.e**(self.swarm_field.alpha_avoid*(math.sqrt(r - self.swarm_field.Rta_ratio)))) for r in self.r_avoid]
     
+    
+    def d_avoid(self):
+        # retuns the d_avoid for each obstacle in the surroundings
+        self.calc_r_avoid()  # Calculate r_avoid before using it
+        return [(self.S_avoid()[i] * (self.p[0] - self.obstacles_p[i][0]), self.S_avoid()[i] * (self.p[1] - self.obstacles_p[i][1])) for i in range(len(self.obstacles_p))]
+    
+    def sum_d_avoid(self):
+        # returns the sum of all the gradients from all the obstacles around the robot
+
+        # Calculate d_avoid for each obstacle
+        d_avoid_list = self.d_avoid()
+        
+        # Initialize the sum of gradients
+        sum_dx_avoid = 0
+        sum_dy_avoid = 0
+        
+        # Sum up the gradients from all obstacles
+        for dx_avoid, dy_avoid in d_avoid_list:
+            sum_dx_avoid += dx_avoid
+            sum_dy_avoid += dy_avoid
+        
+        # Return the sum of gradients
+        return sum_dx_avoid, sum_dy_avoid
+
+
     def move(self):
         # Scale desired velocity by dt for frame-rate independent movement
         scaled_velocity = self.desired_velocity * self.dt
         self.p += self.desired_velocity
 
-
+    # def TPF(self):
 
     
 
