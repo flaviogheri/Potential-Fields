@@ -4,23 +4,33 @@ import numpy as np
 
 
 class Swarm_field:
-    def __init__(self, pos, gamma, center = [0,0], Rt_ratio=0.1):
+    def __init__(self, pos, gamma = 1, epsilon = 0.001, center = [0,0], Rto_ratio = 20, Rti_ratio = 30, Rta_ratio = 50):
 
         self.pos = [1,1]
         self.center = center
 
         self.gamma = gamma
         self.gamma_rot = 5
-        self.alpha_in = 5 # should be within
-        self.alpha_out = 5 # should be within
-        self.alpha_perp = 5 # should be within
-        self.Rto_ratio = Rt_ratio
-        self.Rti_ratio = Rt_ratio
+        # self.alpha_in = 5 # should be within
+        # self.alpha_out = 5 # should be within
+        # self.alpha_perp = 5 # should be within
+        self.epsilon = epsilon
+        self.Rto_ratio = Rto_ratio
+        self.Rti_ratio = Rti_ratio
+        self.Rta_ratio = Rta_ratio # ratio at which agents should avoid each other
 
         self.rad
         self.calculate_R_star
         self.calculate_delta_R_in
         self.calculate_delta_R_out
+
+        # calculating liminting functions (alphas) using epsilon variable (S_in(R*) = epsilon)
+
+        self.alpha_in = (1/self.Rti_ratio) * math.log(((1-self.epsilon)/self.epsilon))
+        self.alpha_out = (1/self.Rto_ratio) * math.log(((1-self.epsilon)/self.epsilon))
+        self.alpha_perp = (1/(((self.Rto_ratio-self.Rti_ratio)/2)**2)) * math.log(1-self.epsilon)
+        self.alpha_avoid = (1/self.Rta_ratio) * math.log(((1-self.epsilon)/self.epsilon))
+
 
     @property 
     def rad(self):

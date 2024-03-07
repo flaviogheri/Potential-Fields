@@ -1,5 +1,8 @@
 import numpy as np
+import math
 from random import random
+
+from swarmfield import Swarm_field
 
 def to_np_float_array(x):
     return np.array(x, dtype=float)
@@ -33,9 +36,9 @@ class agent_template:
         self.r = radius
         self.v = to_np_float_array(velocity)
 
-class Agent(agent_template): 
+class swarm_agent(agent_template): 
     """ represents micro entity/agent in swarm"""
-    def __init__(self, position, color, radius=10, goal=np.array([700,500]), max_speed=0.05, dt=0.1, obstacles_p=None):
+    def __init__(self, center_position, position, color, alpha_avoid, Rta_ratio, radius=10, goal=np.array([700,500]), max_speed=0.05, dt=0.1, obstacles_p=None):
         super().__init__(position, radius)
 
         self.vmax = max_speed
@@ -55,25 +58,9 @@ class Agent(agent_template):
 
         self.color = parse_color(color)
 
-
-# class Agent(agent_template): 
-#     """ represents micro entity/agent in swarm"""
-#     def __init__(self, position, radius = 10, goal: [np.ndarray, list, tuple]= np.array([2,2]), max_speed = 5):
-#         super().__init__(position, radius)
-
-#         self.vmax = max_speed
-#         self.goal = goal
-#         self.v = self.desired_velocity # to be updated before movement started so should be fine
-
-#         self.color = parse_color(color)
-
-#         # Potential field constants
-#         self.C = 1.0
-#         self.Q = 1.0
-#         self.eta = 1.0
-
-#         self.obstacles_p = []
-
+        self.swarm_field = Swarm_field(pos=center_position)
+        self.r_avoid = self.calc_r_avoid()
+        
 
     @property
     def desired_velocity(self):
@@ -91,44 +78,56 @@ class Agent(agent_template):
 
         return desired_direction
     
+
+    # @property
+    # in future might be worth transforming this into a property instead !!
+    @property 
+    def calc_r_avoid(self):
+        self.r_avoid = [math.sqrt((self.p[0] - obstacle_p[0])**2 + (self.p[1]-obstacle_p[1])**2) for obstacle_p in self.obstacles_p]
+        return self.r_avoid
+    
+    def S_avoid(self, alpha_avoid, Rta_ratio):
+        return (1 - 1/(1+ math.e**(alpha_avoid*(math.sqrt(self.r_avoid - Rta_ratio)))))
+    
     def move(self):
         # Scale desired velocity by dt for frame-rate independent movement
         scaled_velocity = self.desired_velocity * self.dt
         self.p += self.desired_velocity
 
-    def attractive_force(self):
-        direction = (self.goal - self.p) / np.linalg.norm(self.goal - self.p)
-        magnitude = self.C * np.sqrt(np.linalg.norm(self.p - self.goal))
-        return magnitude, direction  # Return both magnitude and direction
-    
-    def repulsive_force(self, obstacle_p):
-        direction = (self.p - obstacle_p) / np.linalg.norm(self.p - obstacle_p)
-        distance = np.linalg.norm(obstacle_p - self.p)
-        if distance > self.Q:
-            magnitude = 0
-        else:
-            magnitude = self.eta * (1/self.Q - 1/distance) * (1/(distance **2))
-        return magnitude, direction  # Return both magnitude and direction
-
-    
-    def TPF(self):
-        """returns the total potential field in that instance"""
-        total_magnitude = 0
-        total_direction = np.zeros_like(self.goal - self.p)
-
-        # Combine attractive force
-        mag, dir = self.attractive_force()
-        total_magnitude += mag
-        total_direction += mag * dir
-
-        # Combine repulsive forces from obstacles
-        for obstacle_p in self.obstacles_p:
-            mag, dir = self.repulsive_force(obstacle_p)
-            total_magnitude -= mag
-            total_direction -= mag * dir
-
-        return total_magnitude, total_direction
-    
 
 
     
+
+
+    # def attractive_force(self):
+
+    #     return magnitude, direction  # Return both magnitude and direction
+    
+    # def repulsive_force(self, obstacle_p):
+
+    #     if distance > self.Q:
+
+    #     else:
+
+    #     return magnitude, direction  # Return both magnitude and direction
+
+    
+    # def TPF(self):
+    #     """returns the total potential field in that instance"""
+    #     total_magnitude = 0
+    #     total_direction = np.zeros_like(self.goal - self.p)
+
+    #     # Combine attractive force
+    #     mag, dir = self.attractive_force()
+    #     total_magnitude += mag
+    #     total_direction += mag * dir
+
+    #     # Combine repulsive forces from obstacles
+    #     for obstacle_p in self.obstacles_p:
+    #         mag, dir = self.repulsive_force(obstacle_p)
+    #         total_magnitude -= mag
+    #         total_direction -= mag * dir
+
+    #     return total_magnitude, total_direction
+    
+
