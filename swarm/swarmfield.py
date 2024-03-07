@@ -73,7 +73,13 @@ class Swarm_field:
 
     def Sout(self):
         """ gradient vector fielsd directed towards center"""
-        return 1 - (1/(1+ math.e ** (-self.alpha_out*(self.r - (self.R_star+self.delta_R_out)))))
+        # print("power: ", (-self.alpha_out*(self.r - (self.R_star+self.delta_R_out))))
+        # IMPORT (TEMP ISSUE RESOLVE) found issue with powers (sigmoid), if outside the field by large margin, the powers used are extremly large, cancelling out
+        # wont happen as previewed (see notes--> in theory this equation should simplify to Sout = 1-1/1+infty = 1)
+        if  -self.alpha_out*(self.r - (self.R_star+self.delta_R_out)) > 20:
+            return 1
+        else: 
+            return 1 - (1/(1+ math.e ** (-self.alpha_out*(self.r - (self.R_star+self.delta_R_out)))))
     
     def N(self):
         return (math.e ** (-self.alpha_perp * (self.r - self.R_star)**20))

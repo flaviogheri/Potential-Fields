@@ -43,12 +43,14 @@ class swarm_agent(agent_template):
 
         self.vmax = max_speed
         self.dt = 1
-        self.goal = goal
+        # self.goal = goal
 
-        # Potential field constants
-        self.C = 0.15 # scaling factor for attractive force
-        self.Q = 800 # scaling factor for repulsive force
-        self.eta = 30000 # steepness of potential field (gain for attractive force)
+        # # Potential field constants
+        # self.C = 0.15 # scaling factor for attractive force
+        # self.Q = 800 # scaling factor for repulsive force
+        # self.eta = 30000 # steepness of potential field (gain for attractive force)4
+
+        self.swarm_field = Swarm_field(pos=center_position, gamma=1, epsilon = 0.001, center = [200,200], Rto_ratio = 200, Rti_ratio = 100, Rta_ratio = 100)
 
         if obstacles_p is None:
             self.obstacles_p = []
@@ -58,17 +60,17 @@ class swarm_agent(agent_template):
 
         self.color = parse_color(color)
 
-        self.swarm_field = Swarm_field(pos=center_position)
-        self.r_avoid = self.calc_r_avoid()
-        
+        self.r_avoid = self.calc_r_avoid
+   
 
     @property
     def desired_velocity(self):
         if not self.obstacles_p:
+            print("no obstacles, swarm_field: ", self.swarm_field.velocity())
             v = self.swarm_field.velocity() 
         else:
             v = self.swarm_field.velocity() + self.sum_d_avoid()
-
+            print("obstacles present ! swarm_field: ", v)
         # Check if the magnitude of the desired velocity exceeds vmax
         desired_velocity_magnitude = np.linalg.norm(v)
 
@@ -115,7 +117,8 @@ class swarm_agent(agent_template):
 
     def move(self):
         # Scale desired velocity by dt for frame-rate independent movement
-        scaled_velocity = self.desired_velocity * self.dt
+        print("velocity and time: ", self.desired_velocity, self.dt)
+        scaled_velocity = (self.desired_velocity[0] * self.dt, self.desired_velocity[1] * self.dt)
         self.p += self.desired_velocity
 
     # def TPF(self):
