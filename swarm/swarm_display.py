@@ -81,7 +81,8 @@ def main():
         
         x, y = swarm_agents[0].center_position
         y += dt * -10 # Adjust the multiplier to change the speed of movement
-        new_pos = (int(x), int(y)) 
+        new_pos = (int(x), int(y))
+        print("new_pos: ", new_pos)
         pg.draw.circle(disp, (0, 0, 0), new_pos, agent.r)
 
 
@@ -91,9 +92,12 @@ def main():
         print("swarm agents:", swarm_agents)
         for agent in swarm_agents:
             agent.dt = dt
+            # agent.swarm_field.center = new_pos
+            # agent.swarm_field.pos = agent.p
+            print("swarm center according to agent: ", agent.swarm_field.center)
             agent.center_position = new_pos
             agent.move()
-            time.sleep(1)
+            time.sleep(0.1)
 
         # Draw each swarm agent
         for agent in swarm_agents:

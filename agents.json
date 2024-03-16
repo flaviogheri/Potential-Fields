@@ -5,8 +5,8 @@
         "y": 100
       },
       "center_position": {
-        "x": 200,
-        "y": 200
+        "x": 300,
+        "y": 300
       },
       "length": 5,
       "color": "blue",
@@ -19,8 +19,8 @@
         "y": 100
       },
       "center_position": {
-        "x": 200,
-        "y": 200
+        "x": 300,
+        "y": 300
       },
       "length": 5,
       "color": "green",

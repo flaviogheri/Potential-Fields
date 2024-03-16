@@ -4,10 +4,11 @@ import numpy as np
 
 
 class Swarm_field:
-    def __init__(self, pos, gamma = 1, epsilon = 0.001, center = [0,0], Rto_ratio = 20, Rti_ratio = 30, Rta_ratio = 50):
+    def __init__(self, pos, center = [0,0], gamma = 1, epsilon = 0.01, Rto_ratio = 200, Rti_ratio = 30, Rta_ratio = 40):
 
-        self.pos = [1,1]
+        self.pos = pos
         self.center = center
+        self.max_dist = 200
 
         self.gamma = gamma
         self.gamma_rot = 5
@@ -51,9 +52,22 @@ class Swarm_field:
 
     #@property 
     def bivariate_normal(self):
-        return math.e**-((self.pos[0]-self.center[0])**2 + self.gamma*(self.pos[1] - self.center[1])**2)
 
+        ###################### THIS FUNCTION IS TO BE FIXED ############################	
+        """current issue: if use the distances given, exponentially becomes too large, and the function returns 0	
+        
+        temporary solution : use standard deviations in order to guarantee that a value between 0 and 1 will be returned."""
+
+        # print("pos agent according to swarm", self.pos[0], self.pos[1])
+        # print("center of swarm", self.center[0], self.center[1])
+        # print("exponent: ", -((self.pos[0]-self.center[0])**2 + self.gamma*(self.pos[1] - self.center[1])**2))
+        # return math.e**-((self.pos[0]-self.center[0])**2 + self.gamma*(self.pos[1] - self.center[1])**2)
+
+        normalized_x = abs(self.pos[0]-self.center[0]) / self.max_dist
+        normalized_y = abs(self.pos[1]-self.center[1]) / self.max_dist
+        return math.e**-((normalized_x)**2 + self.gamma*(normalized_y)**2)
     def dx(self):
+        # print("self.bivariate_normal() : ", self.bivariate_normal())
         return self.bivariate_normal() * 2 * (self.pos[0] - self.center[0])
     
     def dy(self):
@@ -84,12 +98,17 @@ class Swarm_field:
         return (math.e ** (-self.alpha_perp * (self.r - self.R_star)**20))
 
     def SGN(self):
-        return (1 - 2 * (1/(1+ math.e ** (-self.alpha_perp* self.gamma_rot))))
+        return (1 - 2 * (1/(1+ math.e ** (-self.alpha_perp * self.gamma_rot))))
 
     def velocity(self):
         """" function that returns the velocity of swarm field depending on the agents position
         inputs: x, y
         """
+        # print("Sin: ", self.Sin())
+        # print("Sout: ", self.Sout())
+        # print("N: ", self.N())
+        # print("SGN: ", self.SGN())
+        # print("dx, dy: ", self.dx(), self.dy())
         vx = self.Sin() - self.Sout()*self.dx() + self.SGN() * self.N() * self.dx()
         vy = self.Sin() - self.Sout()*self.dy() + self.SGN() * self.N() * self.dy()
         return (vx, vy)

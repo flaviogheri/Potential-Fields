@@ -5,18 +5,18 @@ from swarmfield import Swarm_field
 # Define parameters
 gamma = 0.5
 center = [0, 0]
-Rt_ratio = 0.1
+# Rt_ratio = 0.1
 
 
 # Define grid for potential field visualization
-x = np.linspace(-5, 5, 100)
-y = np.linspace(-5, 5, 100)
+x = np.linspace(-300, 300, 100)
+y = np.linspace(-300, 300, 100)
 X, Y = np.meshgrid(x, y)  # Create meshgrid for grid structure
 
 
 # Calculate force magnitudes for each grid point
 F_total = np.zeros_like(X)  # Array to store force magnitudes (scalars)
-swarm_field = Swarm_field(pos=[1, 1], gamma=gamma, center=center,Rto_ratio = 20, Rti_ratio = 30, Rta_ratio = 50)
+swarm_field = Swarm_field(pos=[1, 1], gamma=gamma, center=center,Rto_ratio = 20, Rti_ratio = 100, Rta_ratio = 10)
 
 
 for i in range(len(x)):
@@ -31,7 +31,7 @@ fig, ax = plt.subplots(figsize=(8, 6))
 # Plot the magnitude
 magnitude_plot = ax.imshow(
     F_total, cmap='viridis', extent=(x.min(), x.max(), y.min(), y.max()), origin='lower',
-    interpolation='nearest', vmin=0, vmax=5
+    interpolation='nearest', vmin=0, vmax=500
 )
 ax.set_xlabel('X Position')
 ax.set_ylabel('Y Position')

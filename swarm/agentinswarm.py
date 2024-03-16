@@ -68,12 +68,15 @@ class swarm_agent(agent_template):
         
     @property 
     def swarm_field(self):
-        return Swarm_field(pos=self.center_position, gamma=1, epsilon = 0.001, center = [200,200], Rto_ratio = 200, Rti_ratio = 100, Rta_ratio = 100)
+        return Swarm_field(pos=self.p, center=self.center_position)
+    
     @property
     def desired_velocity(self):
         if not self.obstacles_p:
             v = self.swarm_field.velocity() 
         else:
+            # print("swarm field :", self.swarm_field.velocity())
+            # print("ind. obstacles :", self.sum_d_avoid())
             v = self.swarm_field.velocity() + self.sum_d_avoid()
         # Check if the magnitude of the desired velocity exceeds vmax
         desired_velocity_magnitude = np.linalg.norm(v)
@@ -110,17 +113,19 @@ class swarm_agent(agent_template):
         sum_dx_avoid = 0
         sum_dy_avoid = 0
         
+        # print("d_avoid_list: ", d_avoid_list)
         # Sum up the gradients from all obstacles
         for dx_avoid, dy_avoid in d_avoid_list:
             sum_dx_avoid += dx_avoid
             sum_dy_avoid += dy_avoid
         
         # Return the sum of gradients
+        # print("sum_dx_avoid, sum_dy_avoid :", sum_dx_avoid, sum_dy_avoid)
         return sum_dx_avoid, sum_dy_avoid
 
 
     def move(self):
         # Scale desired velocity by dt for frame-rate independent movement
-        print("swarm center: ", self.center_position)
+        # print("swarm center: ", self.center_position)
         scaled_velocity = (self.desired_velocity[0] * self.dt, self.desired_velocity[1] * self.dt)
         self.p += scaled_velocity
