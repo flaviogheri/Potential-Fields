@@ -3,6 +3,7 @@ import json
 from agentinswarm import swarm_agent
 import numpy as np
 import time
+import math
 
 with open('obs.json') as f:
     obs = json.load(f)
@@ -55,12 +56,13 @@ def main():
         alpha_avoid = agent_data['alpha_avoid']
         Rta_ratio = agent_data['Rta_ratio']
 
-        agent = swarm_agent(center_position=center_position, position=position, color=agent_color, alpha_avoid=alpha_avoid, Rta_ratio=Rta_ratio, radius=agent_radius, max_speed=0.8)
+        agent = swarm_agent(center_position=center_position, position=position, color=agent_color, alpha_avoid=alpha_avoid, Rta_ratio=Rta_ratio, radius=agent_radius, max_speed=20)
         swarm_agents.append(agent)
 
     # Set clock for framerate
     clock = pg.time.Clock()
     fps = 60  # Adjust this value to change the framerate (lower value slows down the simulation)
+    angle = 0  # Initialize angle at 0
 
     # Main loop
     running = True
@@ -79,22 +81,30 @@ def main():
             obstacle_positions = [other_agent.p for other_agent in swarm_agents if other_agent != agent]
             agent.obstacles_p = obstacle_positions
         
-        x, y = swarm_agents[0].center_position
-        y += dt * -10 # Adjust the multiplier to change the speed of movement
-        new_pos = (int(x), int(y))
-        print("new_pos: ", new_pos)
+        r = 100  # Adjust the radius as needed
+
+        # Inside your game loop:
+        angle += dt/5  # Increment the angle over time
+        # print("angle: ", angle)
+        # print("cos: ", (r * math.cos(angle)), "sin: ", (r * math.sin(angle)))
+        x = (r * math.cos(angle)) + 300 # origin of the circle is at (300, 300)
+        y = (r * math.sin(angle)) + 300
+        
+        new_pos = (x, y)
+
+        # print("new_pos: ", new_pos)
         pg.draw.circle(disp, (0, 0, 0), new_pos, agent.r)
 
 
 
 
         # Move each swarm agent
-        print("swarm agents:", swarm_agents)
+        # print("swarm agents:", swarm_agents)
         for agent in swarm_agents:
             agent.dt = dt
             # agent.swarm_field.center = new_pos
             # agent.swarm_field.pos = agent.p
-            print("swarm center according to agent: ", agent.swarm_field.center)
+            # print("swarm center according to agent: ", agent.swarm_field.center)
             agent.center_position = new_pos
             agent.move()
             time.sleep(0.1)

@@ -4,7 +4,7 @@ import numpy as np
 
 
 class Swarm_field:
-    def __init__(self, pos, center = [0,0], gamma = 1, epsilon = 0.01, Rto_ratio = 200, Rti_ratio = 30, Rta_ratio = 40):
+    def __init__(self, pos, center = [0,0], gamma = 1, epsilon = 0.001, Rto_ratio = 200, Rti_ratio = 30, Rta_ratio = 40):
 
         self.pos = pos
         self.center = center
@@ -30,7 +30,12 @@ class Swarm_field:
         self.alpha_in = (1/self.Rti_ratio) * math.log(((1-self.epsilon)/self.epsilon))
         self.alpha_out = (1/self.Rto_ratio) * math.log(((1-self.epsilon)/self.epsilon))
         self.alpha_perp = (1/(((self.Rto_ratio-self.Rti_ratio)/2)**2)) * math.log(1-self.epsilon)
-        self.alpha_avoid = (1/self.Rta_ratio) * math.log(((1-self.epsilon)/self.epsilon))
+
+
+        ###################### ISUEE: PARAMETER ISNT STRONG ENOUGH ############################
+        """temporary solution: giving a power to the epsilon parameter to make it stronger, aka epsilon/2"""
+
+        self.alpha_avoid = (1/self.Rta_ratio) * math.log(((1-self.epsilon/2)/self.epsilon/2))
 
 
     @property 
