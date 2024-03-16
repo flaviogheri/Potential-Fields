@@ -16,8 +16,7 @@ X, Y = np.meshgrid(x, y)  # Create meshgrid for grid structure
 
 # Calculate force magnitudes for each grid point
 F_total = np.zeros_like(X)  # Array to store force magnitudes (scalars)
-swarm_field = Swarm_field(pos=[1, 1], gamma=gamma, center=center, Rt_ratio=Rt_ratio)
-
+swarm_field = Swarm_field(pos=[1, 1], gamma=gamma, center=center,Rto_ratio = 20, Rti_ratio = 30, Rta_ratio = 50)
 
 
 for i in range(len(x)):

@@ -128,3 +128,7 @@ class Agent(agent_template):
             total_direction -= mag * dir
 
         return total_magnitude, total_direction
+    
+
+
+    
