@@ -1,10 +1,1 @@
-{
-    "agent": "obstacle",
-    "shape": "circle",
-    "color": "red",
-    "length": "10",
-    "position": {
-        "x": "200",
-        "y": "200"
-    }
-}
+{}

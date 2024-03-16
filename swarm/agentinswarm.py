@@ -49,8 +49,7 @@ class swarm_agent(agent_template):
         # self.C = 0.15 # scaling factor for attractive force
         # self.Q = 800 # scaling factor for repulsive force
         # self.eta = 30000 # steepness of potential field (gain for attractive force)4
-
-        self.swarm_field = Swarm_field(pos=center_position, gamma=1, epsilon = 0.001, center = [200,200], Rto_ratio = 200, Rti_ratio = 100, Rta_ratio = 100)
+        self.center_position = center_position
 
         if obstacles_p is None:
             self.obstacles_p = []
@@ -61,16 +60,21 @@ class swarm_agent(agent_template):
         self.color = parse_color(color)
 
         self.r_avoid = self.calc_r_avoid
-   
 
+        self.r_vision = self.r_avoid * 2
+   
+#    def find_obs(self):
+#         for 
+        
+    @property 
+    def swarm_field(self):
+        return Swarm_field(pos=self.center_position, gamma=1, epsilon = 0.001, center = [200,200], Rto_ratio = 200, Rti_ratio = 100, Rta_ratio = 100)
     @property
     def desired_velocity(self):
         if not self.obstacles_p:
-            print("no obstacles, swarm_field: ", self.swarm_field.velocity())
             v = self.swarm_field.velocity() 
         else:
             v = self.swarm_field.velocity() + self.sum_d_avoid()
-            print("obstacles present ! swarm_field: ", v)
         # Check if the magnitude of the desired velocity exceeds vmax
         desired_velocity_magnitude = np.linalg.norm(v)
 
@@ -93,7 +97,7 @@ class swarm_agent(agent_template):
     
     def d_avoid(self):
         # retuns the d_avoid for each obstacle in the surroundings
-        self.calc_r_avoid()  # Calculate r_avoid before using it
+        self.calc_r_avoid  # Calculate r_avoid before using it
         return [(self.S_avoid()[i] * (self.p[0] - self.obstacles_p[i][0]), self.S_avoid()[i] * (self.p[1] - self.obstacles_p[i][1])) for i in range(len(self.obstacles_p))]
     
     def sum_d_avoid(self):
@@ -117,44 +121,6 @@ class swarm_agent(agent_template):
 
     def move(self):
         # Scale desired velocity by dt for frame-rate independent movement
-        print("velocity and time: ", self.desired_velocity, self.dt)
+        print("swarm center: ", self.center_position)
         scaled_velocity = (self.desired_velocity[0] * self.dt, self.desired_velocity[1] * self.dt)
-        self.p += self.desired_velocity
-
-    # def TPF(self):
-
-    
-
-
-    # def attractive_force(self):
-
-    #     return magnitude, direction  # Return both magnitude and direction
-    
-    # def repulsive_force(self, obstacle_p):
-
-    #     if distance > self.Q:
-
-    #     else:
-
-    #     return magnitude, direction  # Return both magnitude and direction
-
-    
-    # def TPF(self):
-    #     """returns the total potential field in that instance"""
-    #     total_magnitude = 0
-    #     total_direction = np.zeros_like(self.goal - self.p)
-
-    #     # Combine attractive force
-    #     mag, dir = self.attractive_force()
-    #     total_magnitude += mag
-    #     total_direction += mag * dir
-
-    #     # Combine repulsive forces from obstacles
-    #     for obstacle_p in self.obstacles_p:
-    #         mag, dir = self.repulsive_force(obstacle_p)
-    #         total_magnitude -= mag
-    #         total_direction -= mag * dir
-
-    #     return total_magnitude, total_direction
-    
-
+        self.p += scaled_velocity

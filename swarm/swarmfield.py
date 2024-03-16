@@ -49,7 +49,6 @@ class Swarm_field:
         """ outside boundary of the R neighboorhood"""
         self.delta_R_out = self.Rto_ratio * self.R_star
 
-
     #@property 
     def bivariate_normal(self):
         return math.e**-((self.pos[0]-self.center[0])**2 + self.gamma*(self.pos[1] - self.center[1])**2)

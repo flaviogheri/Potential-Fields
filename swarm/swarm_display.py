@@ -2,6 +2,7 @@ import pygame as pg
 import json
 from agentinswarm import swarm_agent
 import numpy as np
+import time
 
 with open('obs.json') as f:
     obs = json.load(f)
@@ -70,24 +71,40 @@ def main():
 
         # Limit framerate
         dt = clock.tick(fps) / 1000  # Convert milliseconds to seconds for calculations
-
-        # Move each swarm agent
-        for agent in swarm_agents:
-            agent.dt = dt
-            agent.move()
-
         # Clear the screen
         disp.fill(parse_color("white"))
+
+        for agent in swarm_agents:
+
+            obstacle_positions = [other_agent.p for other_agent in swarm_agents if other_agent != agent]
+            agent.obstacles_p = obstacle_positions
+        
+        x, y = swarm_agents[0].center_position
+        y += dt * -10 # Adjust the multiplier to change the speed of movement
+        new_pos = (int(x), int(y)) 
+        pg.draw.circle(disp, (0, 0, 0), new_pos, agent.r)
+
+
+
+
+        # Move each swarm agent
+        print("swarm agents:", swarm_agents)
+        for agent in swarm_agents:
+            agent.dt = dt
+            agent.center_position = new_pos
+            agent.move()
+            time.sleep(1)
 
         # Draw each swarm agent
         for agent in swarm_agents:
             pg.draw.circle(disp, agent.color, agent.p.astype(int), agent.r)
 
-        # Draw obstacles (assuming there's only one for now)
-        obs_pos = (int(obs['position']['x']), int(obs['position']['y']))
-        obs_radius = int(obs['length'])
-        obs_color = parse_color(obs['color'])
-        pg.draw.circle(disp, obs_color, obs_pos, obs_radius)
+        if obs:
+            obs_pos = (int(obs['position']['x']), int(obs['position']['y']))
+            obs_radius = int(obs['length'])
+            obs_color = parse_color(obs['color'])
+            pg.draw.circle(disp, obs_color, obs_pos, obs_radius)
+
 
         # Update the display
         pg.display.flip()
