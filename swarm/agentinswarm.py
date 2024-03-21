@@ -72,19 +72,25 @@ class swarm_agent(agent_template):
     
     @property
     def desired_velocity(self):
-        if not self.obstacles_p:
+        if np.array(self.obstacles_p).size == 0:
+            # print('swarm field: ', self.swarm_field.velocity())
             v = self.swarm_field.velocity() 
         else:
             # print("swarm field :", self.swarm_field.velocity())
             # print("ind. obstacles :", self.sum_d_avoid())
-            v = self.swarm_field.velocity() + (self.sum_d_avoid() * -self.vmax ) # ATTENTION: ADDED self.vmax SCALE AS WAS VERY SMALL... 
+            print("vmax: " , self.vmax)
+            print('swarm field: ', self.swarm_field.velocity(), 'sum_d_avoid: ',self.sum_d_avoid())
+            # print("final sum", self.sum_d_avoid())
+            v = self.swarm_field.velocity() + (self.sum_d_avoid() ) # ATTENTION: ADDED self.vmax SCALE AS WAS VERY SMALL... 
         # Check if the magnitude of the desired velocity exceeds vmax
-        desired_velocity_magnitude = np.linalg.norm(v)
+        desired_velocity_magnitude = np.linalg.norm(v) + 1000
+        
 
-        if desired_velocity_magnitude > self.vmax:
-            # Scale the velocity vector to ensure it falls within the vmax bounds
-            v = v / desired_velocity_magnitude * self.vmax
-
+        # v = v / desired_velocity_magnitude * self.vmax
+        # if desired_velocity_magnitude > self.vmax:
+        #     # Scale the velocity vector to ensure it falls within the vmax bounds
+        #     v = v / desired_velocity_magnitude * self.vmax
+        # print("derireved vel", v)
         return v
 
     # @property
@@ -110,24 +116,32 @@ class swarm_agent(agent_template):
 
         # print("sqrt param: ", [abs(r - self.swarm_field.Rta_ratio) for r in self.r_avoid])
         # print("S_avoid: ", [(1 - 1/(1 + math.e**(-self.swarm_field.alpha_avoid*(math.sqrt(r - self.swarm_field.Rta_ratio)))) ) for r in self.r_avoid])
-        return [(1 - 1/(1 + math.e**(-self.swarm_field.alpha_avoid*(math.sqrt(r - self.swarm_field.Rta_ratio))))) for r in self.r_avoid]
-    
+        # if all([(r - self.swarm_field.Rta_ratio) > 0 for r in self.r_avoid]):
+        #     return [(1 - 1/(1 + math.e**(-self.swarm_field.alpha_avoid*(math.sqrt(r - self.swarm_field.Rta_ratio))))) for r in self.r_avoid]
+        # else:
+        #     return 1
+        return [1 if (r - self.swarm_field.Rta_ratio) < 0 else 
+            (1 - 1/(1 + math.e**(-self.swarm_field.alpha_avoid*(math.sqrt(r - self.swarm_field.Rta_ratio))))) for r in self.r_avoid]
     
     def d_avoid(self):
         # retuns the d_avoid for each obstacle in the surroundings
         self.calc_r_avoid  # Calculate r_avoid before using it
         # print("d_avoid: ", [(self.S_avoid()[i] * (self.p[0] - self.obstacles_p[i][0]), self.S_avoid()[i] * (self.p[1] - self.obstacles_p[i][1])) for i in range(len(self.obstacles_p))]
-        print("d_avoid: ", [(self.S_avoid()[i] , self.S_avoid()[i]) for i in range(len(self.obstacles_p))])
+        # print("d_avoid: ", [(self.S_avoid()[i] , self.S_avoid()[i]) for i in range(len(self.obstacles_p))])
         
-        return [(self.S_avoid()[i] , self.S_avoid()[i]) for i in range(len(self.obstacles_p))]
+        # return [(self.S_avoid()[i] , self.S_avoid()[i]) for i in range(len(self.obstacles_p))]
         # return [(self.S_avoid()[i] * (self.p[0] - self.obstacles_p[i][0]), self.S_avoid()[i] * (self.p[1] - self.obstacles_p[i][1])) for i in range(len(self.obstacles_p))]
+    
+        return [(self.S_avoid()[i] * (self.p[0] - self.obstacles_p[i][0]), 
+                    self.S_avoid()[i] * (self.p[1] - self.obstacles_p[i][1])) 
+                for i in range(len(self.obstacles_p))]
     
     def sum_d_avoid(self):
         # returns the sum of all the gradients from all the obstacles around the robot
 
         # Calculate d_avoid for each obstacle
         d_avoid_list = self.d_avoid()
-        
+        print("d_avoid_list: ", d_avoid_list)
         # Initialize the sum of gradients
         sum_dx_avoid = 0
         sum_dy_avoid = 0
@@ -137,7 +151,7 @@ class swarm_agent(agent_template):
         for dx_avoid, dy_avoid in d_avoid_list:
             sum_dx_avoid += dx_avoid
             sum_dy_avoid += dy_avoid
-        
+        print("sum dx",sum_dx_avoid, sum_dy_avoid)
         # Return the sum of gradients
         # print("sum_dx_avoid, sum_dy_avoid :", sum_dx_avoid, sum_dy_avoid)
         return sum_dx_avoid, sum_dy_avoid
