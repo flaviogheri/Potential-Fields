@@ -59,12 +59,63 @@ class swarm_agent(agent_template):
 
         self.color = parse_color(color)
 
-        self.r_avoid = self.calc_r_avoid
+        # self.r_avoid = self.calc_r_avoid
 
-        self.r_vision = self.r_avoid * 2
+        # self.r_vision = self.r_avoid * 2
+
+        # self.alpha_avoid 
+
+
    
 #    def find_obs(self):
 #         for 
+        
+    @property 
+    def calc_r_avoid(self):
+        self.distances = [abs(self.p - obstacle_p) for obstacle_p in self.obstacles_p]
+
+    # def d_avoid(self):
+    #     self.calc_r_avoid
+    #     return [(-100 if (distance < self.swarm_field.Rta_ratio) else 1/ (1+ math.exp(-self.sigmoid_steepness * (distance - self.swarm_field.Rta_ratio)))) for distance in self.distances]
+
+    def d_avoid(self):
+        self.calc_r_avoid
+        d_avoid = []
+
+        """The following is wrong (please plot sigmoid in geogebra to see): 
+        reason being is that the force increases with distance rather than reducing, above a new sigmoid shape has been made.
+        """
+        ######## TEMPORARY MAX RANGE PLEASE EDIT THIS LATER ##############
+
+        ### (function in general is wrong but desperately need something that does what need it to without having to calibrate it myself too much)
+        # what max range does is sets a max range at which we take the d_avoid, and also scales the force so that it varies from 0 - max_range
+        max_range = self.swarm_field.Rta_ratio * 2
+
+
+        for distance in self.distances:
+            angle = np.arctan2(distance[1], distance[0])
+            polar_distance = abs(np.linalg.norm(distance))
+
+            if polar_distance < self.swarm_field.Rta_ratio + 0.01:
+                d_avoid.append([-100, angle])
+            else: 
+                # instead of paper we will use ln(x/R-c/R) instead (as way easier), and create bound for if too distant can ignore
+                if polar_distance - self.swarm_field.Rta_ratio > max_range:
+                    d_avoid.append([0,0])
+                else: 
+                    # finally use the ln(x/R-c/R) + c equation
+                    d_avoid.append([(math.log(polar_distance/max_range - self.swarm_field.Rta_ratio/max_range)),angle])
+
+        return d_avoid
+        # for distance in self.distances:
+        #     angle = np.arctan2(distance[1], distance[0])
+        #     polar_distance = np.linalg.norm(distance)
+        #     if  polar_distance < self.swarm_field.Rta_ratio:
+        #         d_avoid.append([-100, angle])# this returns magnitude and angle (polar coordinates)
+        #     else: 
+        #         d_avoid.append([1 - (1 / (np.exp(-self.swarm_field.alpha_avoid * (polar_distance - self.swarm_field.Rta_ratio)))),angle])
+        # return d_avoid
+
         
     @property 
     def swarm_field(self):
@@ -73,15 +124,13 @@ class swarm_agent(agent_template):
     @property
     def desired_velocity(self):
         if np.array(self.obstacles_p).size == 0:
-            # print('swarm field: ', self.swarm_field.velocity())
             v = self.swarm_field.velocity() 
         else:
-            # print("swarm field :", self.swarm_field.velocity())
-            # print("ind. obstacles :", self.sum_d_avoid())
-            print("vmax: " , self.vmax)
-            print('swarm field: ', self.swarm_field.velocity(), 'sum_d_avoid: ',self.sum_d_avoid())
-            # print("final sum", self.sum_d_avoid())
-            v = self.swarm_field.velocity() + (self.sum_d_avoid() ) # ATTENTION: ADDED self.vmax SCALE AS WAS VERY SMALL... 
+            # print("vmax: " , self.vmax)
+            if np.all(self.sum_d_avoid()) > 0.0:
+                print('swarm field: ', self.swarm_field.velocity(), 'sum_d_avoid post conversion: ',self.sum_d_avoid())
+                print('position : ', self.p)
+            v = np.array(self.swarm_field.velocity()) - self.sum_d_avoid()
         # Check if the magnitude of the desired velocity exceeds vmax
         desired_velocity_magnitude = np.linalg.norm(v) + 1000
         
@@ -92,69 +141,48 @@ class swarm_agent(agent_template):
         #     v = v / desired_velocity_magnitude * self.vmax
         # print("derireved vel", v)
         return v
-
-    # @property
-    # in future might be worth transforming this into a property instead !!
-    @property 
-    def calc_r_avoid(self):
-        self.r_avoid = [math.sqrt((self.p[0] - obstacle_p[0])**2 + (self.p[1]-obstacle_p[1])**2) for obstacle_p in self.obstacles_p]
-        return self.r_avoid
-    
-    def S_avoid(self):
-
-
-        ################## ISSUE HERE ############################	
-        """ s avoid is getting smaller when agents getting bigger, not the adverse effect..., 
-        
-        
-        indeed when the function is plotted it is seen that the function gets bigger with a larger r not the opposite effect...
-        
-        attempted sol: make it -alpha_avoid"""
-
-
-        
-
-        # print("sqrt param: ", [abs(r - self.swarm_field.Rta_ratio) for r in self.r_avoid])
-        # print("S_avoid: ", [(1 - 1/(1 + math.e**(-self.swarm_field.alpha_avoid*(math.sqrt(r - self.swarm_field.Rta_ratio)))) ) for r in self.r_avoid])
-        # if all([(r - self.swarm_field.Rta_ratio) > 0 for r in self.r_avoid]):
-        #     return [(1 - 1/(1 + math.e**(-self.swarm_field.alpha_avoid*(math.sqrt(r - self.swarm_field.Rta_ratio))))) for r in self.r_avoid]
-        # else:
-        #     return 1
-        return [1 if (r - self.swarm_field.Rta_ratio) < 0 else 
-            (1 - 1/(1 + math.e**(-self.swarm_field.alpha_avoid*(math.sqrt(r - self.swarm_field.Rta_ratio))))) for r in self.r_avoid]
-    
-    def d_avoid(self):
-        # retuns the d_avoid for each obstacle in the surroundings
-        self.calc_r_avoid  # Calculate r_avoid before using it
-        # print("d_avoid: ", [(self.S_avoid()[i] * (self.p[0] - self.obstacles_p[i][0]), self.S_avoid()[i] * (self.p[1] - self.obstacles_p[i][1])) for i in range(len(self.obstacles_p))]
-        # print("d_avoid: ", [(self.S_avoid()[i] , self.S_avoid()[i]) for i in range(len(self.obstacles_p))])
-        
-        # return [(self.S_avoid()[i] , self.S_avoid()[i]) for i in range(len(self.obstacles_p))]
-        # return [(self.S_avoid()[i] * (self.p[0] - self.obstacles_p[i][0]), self.S_avoid()[i] * (self.p[1] - self.obstacles_p[i][1])) for i in range(len(self.obstacles_p))]
-    
-        return [(self.S_avoid()[i] * (self.p[0] - self.obstacles_p[i][0]), 
-                    self.S_avoid()[i] * (self.p[1] - self.obstacles_p[i][1])) 
-                for i in range(len(self.obstacles_p))]
     
     def sum_d_avoid(self):
-        # returns the sum of all the gradients from all the obstacles around the robot
 
-        # Calculate d_avoid for each obstacle
+        # Initialize variables for sum of x-components and y-components
+        sum_x = 0
+        sum_y = 0
         d_avoid_list = self.d_avoid()
-        print("d_avoid_list: ", d_avoid_list)
-        # Initialize the sum of gradients
-        sum_dx_avoid = 0
-        sum_dy_avoid = 0
+        # Sum up the x-components and y-components from all obstacles
+        for magnitude, angle in d_avoid_list:
+            # Convert angle to radians
+            angle_rad = math.radians(angle)
+            
+            # Calculate x and y components
+            x_component = magnitude * math.cos(angle_rad)
+            y_component = magnitude * math.sin(angle_rad)
+
+            # Add x and y components to the sum
+            sum_x += x_component
+            sum_y += y_component
+            
+        return np.array([sum_x, sum_y])
+
+    
+    # def sum_d_avoid(self):
+    #     # returns the sum of all the gradients from all the obstacles around the robot
+
+    #     # Calculate d_avoid for each obstacle
+    #     d_avoid_list = self.d_avoid()
+    #     print("d_avoid_list: ", d_avoid_list)
+    #     # Initialize the sum of gradients
+    #     sum_dx_avoid = 0
+    #     sum_dy_avoid = 0
         
-        # print("d_avoid_list: ", d_avoid_list)
-        # Sum up the gradients from all obstacles
-        for dx_avoid, dy_avoid in d_avoid_list:
-            sum_dx_avoid += dx_avoid
-            sum_dy_avoid += dy_avoid
-        print("sum dx",sum_dx_avoid, sum_dy_avoid)
-        # Return the sum of gradients
-        # print("sum_dx_avoid, sum_dy_avoid :", sum_dx_avoid, sum_dy_avoid)
-        return sum_dx_avoid, sum_dy_avoid
+    #     # print("d_avoid_list: ", d_avoid_list)
+    #     # Sum up the gradients from all obstacles
+    #     for dx_avoid, dy_avoid in d_avoid_list:
+    #         sum_dx_avoid += dx_avoid
+    #         sum_dy_avoid += dy_avoid
+    #     print("sum dx",sum_dx_avoid, sum_dy_avoid)
+    #     # Return the sum of gradients
+    #     # print("sum_dx_avoid, sum_dy_avoid :", sum_dx_avoid, sum_dy_avoid)
+    #     return sum_dx_avoid, sum_dy_avoid
 
 
     def move(self):
@@ -162,3 +190,66 @@ class swarm_agent(agent_template):
         # print("swarm center: ", self.center_position)
         scaled_velocity = (self.desired_velocity[0] * self.dt, self.desired_velocity[1] * self.dt)
         self.p += scaled_velocity
+
+
+    # @property
+    # in future might be worth transforming this into a property instead !!
+
+
+    # @property 
+    # def calc_r_avoid(self):
+    #     self.r_avoid = [math.sqrt((self.p[0] - obstacle_p[0])**2 + (self.p[1]-obstacle_p[1])**2) for obstacle_p in self.obstacles_p]
+    #     return self.r_avoid
+    
+    # def S_avoid(self):
+
+
+    #     ################## ISSUE HERE ############################	
+    #     """ s avoid is getting smaller when agents getting bigger, not the adverse effect..., 
+        
+        
+    #     indeed when the function is plotted it is seen that the function gets bigger with a larger r not the opposite effect...
+        
+    #     attempted sol: make it -alpha_avoid"""
+
+    #     # return [1 if (r - self.swarm_field.Rta_ratio) < 0 else: deltaSavoid for ]
+
+        
+
+    #     # print("sqrt param: ", [abs(r - self.swarm_field.Rta_ratio) for r in self.r_avoid])
+    #     # print("S_avoid: ", [(1 - 1/(1 + math.e**(-self.swarm_field.alpha_avoid*(math.sqrt(r - self.swarm_field.Rta_ratio)))) ) for r in self.r_avoid])
+    #     if all([(r - self.swarm_field.Rta_ratio) > 0 for r in self.r_avoid]):
+    #         return [(1 - 1/(1 + math.e**(-self.swarm_field.alpha_avoid*(math.sqrt(r - self.swarm_field.Rta_ratio))))) for r in self.r_avoid]
+    #     else:
+    #         return [1 for r in self.r_avoid]
+    #     # return [1 if (r - self.swarm_field.Rta_ratio) < 0 else 
+    #     #     (1 - 1/(1 + math.e**(-self.swarm_field.alpha_avoid*(math.sqrt(r - self.swarm_field.Rta_ratio))))) for r in self.r_avoid]
+
+
+    # def d_avoid_params(self):
+
+
+    #     """ find parameters required to calculate d_avoid"""
+
+    #     C =
+    #     a = self.center_position[0]
+    #     b = self.center_position[1]
+    #     Q = 
+    #     r_avoid =
+
+
+    
+    # def d_avoid(self):
+        # retuns the d_avoid for each obstacle in the surroundings
+        # self.calc_r_avoid  # Calculate r_avoid before using it
+        # print("d_avoid: ", [(self.S_avoid()[i] * (self.p[0] - self.obstacles_p[i][0]), self.S_avoid()[i] * (self.p[1] - self.obstacles_p[i][1])) for i in range(len(self.obstacles_p))]
+        # print("d_avoid: ", [(self.S_avoid()[i] , self.S_avoid()[i]) for i in range(len(self.obstacles_p))])
+        
+        # return [(self.S_avoid()[i] , self.S_avoid()[i]) for i in range(len(self.obstacles_p))]
+        # return [(self.S_avoid()[i] * (self.p[0] - self.obstacles_p[i][0]), self.S_avoid()[i] * (self.p[1] - self.obstacles_p[i][1])) for i in range(len(self.obstacles_p))]
+    
+        # return [(self.S_avoid()[i] * (self.p[0] - self.obstacles_p[i][0]), 
+        #             self.S_avoid()[i] * (self.p[1] - self.obstacles_p[i][1])) 
+        #         for i in range(len(self.obstacles_p))]
+
+        # return [1 if ]

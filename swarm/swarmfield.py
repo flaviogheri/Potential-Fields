@@ -33,9 +33,9 @@ class Swarm_field:
 
 
         ###################### ISUEE: PARAMETER ISNT STRONG ENOUGH ############################
-        """temporary solution: giving a power to the epsilon parameter to make it stronger, aka epsilon/2"""
+        """ NO LONGER DOING: temporary solution: giving a power to the epsilon parameter to make it stronger, aka epsilon/2"""
 
-        self.alpha_avoid = (1/self.Rta_ratio) * math.log(((1-self.epsilon/2)/self.epsilon/2))
+        self.alpha_avoid = (1/self.Rta_ratio) * math.log(((1-self.epsilon)/self.epsilon))
 
 
     @property 

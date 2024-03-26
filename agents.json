@@ -27,5 +27,19 @@
       "alpha_avoid": 0.1,
       "Rta_ratio": 50
     }
+    {
+      "position": {
+        "x": -100,
+        "y": -100
+      },
+      "center_position": {
+        "x": 300,
+        "y": 300
+      },
+      "length": 5,
+      "color": "green",
+      "alpha_avoid": 0.1,
+      "Rta_ratio": 50
+    }
   ]
   
