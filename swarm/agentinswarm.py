@@ -138,22 +138,40 @@ class swarm_agent(agent_template):
     def desired_velocity(self):
         if np.array(self.obstacles_p).size == 0:
             v = self.swarm_field.velocity() 
-        else:
-            # print("vmax: " , self.vmax)
-            # if np.all(self.sum_d_avoid()) > 0.0:
-                # print('swarm field: ', self.swarm_field.velocity(), 'sum_d_avoid post conversion: ',self.sum_d_avoid())
-                # print('position : ', self.p)
-            v = np.array(self.swarm_field.velocity()) + self.sum_d_avoid()
-        # Check if the magnitude of the desired velocity exceeds vmax
-        desired_velocity_magnitude = np.linalg.norm(v) + 1000
+        else: 
+            nearest_obstacle = min(self.obstacles_p, key=lambda o: np.linalg.norm(o - self.p))
+            print(nearest_obstacle)
+            direction_to_obstacle = nearest_obstacle - self.p
+            if np.linalg.norm(direction_to_obstacle) < self.swarm_field.Rta_ratio:
+                v_avoid_obstacle = np.array(-1000 / np.linalg.norm(direction_to_obstacle))
+            else:
+                v_avoid_obstacle = np.array([0,0])
+            # v_avoid_obstacle = -1000 / np.linalg.norm(direction_to_obstacle)
+            
+            v = np.array(self.swarm_field.velocity()- v_avoid_obstacle)
+            # v = np.array(self.swarm_field.velocity() + self.sum_d_avoid())
+            print(v)
+            return v
+    # @property
+    # def desired_velocity(self):
+    #     if np.array(self.obstacles_p).size == 0:
+    #         v = self.swarm_field.velocity() 
+    #     else:
+    #         # print("vmax: " , self.vmax)
+    #         # if np.all(self.sum_d_avoid()) > 0.0:
+    #             # print('swarm field: ', self.swarm_field.velocity(), 'sum_d_avoid post conversion: ',self.sum_d_avoid())
+    #             # print('position : ', self.p)
+    #         v = np.array(self.swarm_field.velocity()) + self.sum_d_avoid()
+    #     # Check if the magnitude of the desired velocity exceeds vmax
+    #     desired_velocity_magnitude = np.linalg.norm(v) + 1000
         
 
-        # v = v / desired_velocity_magnitude * self.vmax
-        # if desired_velocity_magnitude > self.vmax:
-        #     # Scale the velocity vector to ensure it falls within the vmax bounds
-        #     v = v / desired_velocity_magnitude * self.vmax
-        # print("derireved vel", v)
-        return v
+    #     # v = v / desired_velocity_magnitude * self.vmax
+    #     # if desired_velocity_magnitude > self.vmax:
+    #     #     # Scale the velocity vector to ensure it falls within the vmax bounds
+    #     #     v = v / desired_velocity_magnitude * self.vmax
+    #     # print("derireved vel", v)
+    #     return v
     
     def sum_d_avoid(self):
 
@@ -170,8 +188,8 @@ class swarm_agent(agent_template):
             x_component = magnitude * math.cos(angle_rad)
             y_component = magnitude * math.sin(angle_rad)
 
-            if magnitude <0 :
-                print("magnitude: ", magnitude, "angle: ", angle, "angle_rad: ", angle_rad, "cos: ", math.cos(angle_rad), "x_component: ", x_component)
+            # if magnitude <0 :
+            #     print("magnitude: ", magnitude, "angle: ", angle, "angle_rad: ", angle_rad, "cos: ", math.cos(angle_rad), "x_component: ", x_component)
 
             # if math.cos(angle_rad) < 0 or math.sin(angle_rad) < 0:
             #     print("angle: ", angle, "angle_rad: ", angle_rad, "cos: ", math.cos(angle_rad), "x_component: ", x_component)
