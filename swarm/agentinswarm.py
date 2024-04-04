@@ -98,6 +98,7 @@ class swarm_agent(agent_template):
 
             if polar_distance < self.swarm_field.Rta_ratio + 0.01:
                 d_avoid.append([-100, angle])
+                
             else: 
                 # instead of paper we will use ln(x/R-c/R) instead (as way easier), and create bound for if too distant can ignore
                 if polar_distance - self.swarm_field.Rta_ratio > max_range:
