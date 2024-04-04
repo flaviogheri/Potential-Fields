@@ -6,11 +6,11 @@ from agentinswarm import swarm_agent
 gamma = 0.5
 center = [0, 0]
 
-x = np.linspace(-300, 300, 100)
-y = np.linspace(-300, 300, 100)
+x = np.linspace(0, 600, 100)
+y = np.linspace(0, 600, 100)
 X, Y = np.meshgrid(x, y) 
 
-obstacles = np.array([[100,100], [-100,-100], [300,300], [400,400], [500,500], [600,600], [700,700], [800,800], [900,900]])
+obstacles = np.array([[100,100], [300,300], [400,400], [500,500], [600,600], [700,700], [800,800], [900,900]])
 
 agent = swarm_agent(center_position=center, obstacles_p=obstacles, position=[1, 1], color="red", alpha_avoid=5, Rta_ratio=10, radius=10, max_speed=20)
 
@@ -42,6 +42,7 @@ ax.set_ylim([Y.min(), Y.max()])
 # Add colorbar to the plot
 cbar = fig.colorbar(magnitude_plot)
 cbar.set_label('Magnitude')
+
 
 # Display the plot
 plt.show()
